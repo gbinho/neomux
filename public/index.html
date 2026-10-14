@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NeoMux</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="bar">
+    <div class="brand" data-text="NEOMUX"><span class="logo" aria-hidden="true">▚▞</span>NEOMUX<span class="ver">_v0.2</span></div>
+    <ol class="steps" id="steps">
+      <li data-step="cut"><b>01</b> Corte</li>
+      <li data-step="trim"><b>02</b> Aparar</li>
+      <li data-step="export"><b>03</b> Exportar</li>
+    </ol>
+    <div class="file">
+      <span id="fileName"></span>
+      <button class="ghost" id="newBtn" hidden>Novo vídeo</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="drop" class="drop">
+      <input type="file" id="fileInput" accept="video/*,.mkv,.avi,.mov" hidden>
+      <div class="drop-inner">
+        <p class="drop-kicker">// sistema pronto_ aguardando arquivo</p>
+        <h1 class="glitch" data-text="SOLTE O VÍDEO">SOLTE O VÍDEO</h1>
+        <p class="drop-sub">Arraste um arquivo para cá ou <button class="link" id="pickBtn">[ selecione no disco ]</button></p>
+        <p class="drop-note">Material bruto, antes da edição, rende o mosh mais limpo.</p>
+      </div>
+    </section>
+
+    <section id="editor" class="editor" hidden>
+      <div class="stage">
+        <video id="video" playsinline preload="auto"></video>
+        <div class="stage-badge" id="stageBadge">Original</div>
+        <div class="stage-corner tl"></div><div class="stage-corner tr"></div><div class="stage-corner bl"></div><div class="stage-corner br"></div>
+      </div>
+
+      <div class="transport">
+        <button class="icon" id="playBtn" title="Reproduzir (espaço)">▶</button>
+        <span class="tc" id="timecode">00:00.00</span>
+        <div class="spacer"></div>
+        <div class="mark-buttons" id="markButtons"></div>
+      </div>
+
+      <div class="timeline" id="timeline"></div>
+      <p class="hint" id="hint"></p>
+
+      <div class="panel" id="cutPanel">
+        <div class="presets" id="presets">
+          <button class="chip" data-preset="smooth">Suave</button>
+          <button class="chip" data-preset="melt">Derretido longo</button>
+          <button class="chip" data-preset="classic">Clássico</button>
+          <button class="chip" data-preset="chunky">Pixelado</button>
+        </div>
+
+        <h3>Visual</h3>
+        <div class="field">
+          <label for="blockSize">Tamanho dos blocos</label>
+          <select id="blockSize">
+            <option value="ultra">Mínimo (mais suave, mais lento)</option>
+            <option value="fine" selected>Pequeno</option>
+            <option value="classic">Médio (clássico Avidemux)</option>
+            <option value="xl">Grande (pixelado)</option>
+          </select>
+        </div>
+        <label class="check"><input type="checkbox" id="refined" checked> Movimento refinado <small>blocos de 8 px, precisão de ¼ de pixel</small></label>
+        <div class="field">
+          <label>Suavização <output id="smoothingOut"></output></label>
+          <input type="range" id="smoothing" min="0" max="4" step="1" value="1">
+          <small>Desfaz as bordas quadriculadas dos blocos.</small>
+        </div>
+
+        <h3>Duração</h3>
+        <div class="field">
+          <label>Persistência <output id="persistenceOut"></output></label>
+          <input type="range" id="persistence" min="0" max="10" step="1" value="2">
+          <small>Quanto a imagem de antes do corte resiste antes de sumir.</small>
+        </div>
+        <div class="field">
+          <label>Fim do efeito <output id="effectLengthOut"></output></label>
+          <input type="range" id="effectLength" min="0" max="15" step="0.1" value="0">
+          <small>Volta à imagem limpa depois desse tempo.</small>
+        </div>
+        <div class="field">
+          <label>Bloom <output id="bloomOut"></output></label>
+          <input type="range" id="bloom" min="0" max="90" step="1" value="0">
+          <small>Repete um quadro de movimento para o borrão crescer.</small>
+        </div>
+        <div class="field">
+          <label>Posição do bloom <output id="bloomAtOut"></output></label>
+          <input type="range" id="bloomAt" min="0" max="60" step="1" value="3">
+        </div>
+
+        <h3>Trechos</h3>
+        <div class="field">
+          <label>Antes do corte <output id="preRollOut"></output></label>
+          <input type="range" id="preRoll" min="0.3" max="8" step="0.1" value="2">
+        </div>
+        <div class="field">
+          <label>Depois do corte <output id="postRollOut"></output></label>
+          <input type="range" id="postRoll" min="0.5" max="20" step="0.1" value="5">
+        </div>
+        <button class="primary" id="moshBtn">Gerar datamosh</button>
+      </div>
+
+      <div class="panel" id="exportPanel" hidden>
+        <div class="field">
+          <label for="format">Formato</label>
+          <select id="format"></select>
+        </div>
+        <div class="field">
+          <label for="quality">Qualidade</label>
+          <select id="quality"></select>
+          <small id="qualityNote"></small>
+        </div>
+        <div class="field">
+          <label for="height">Resolução</label>
+          <select id="height">
+            <option value="0">Original</option>
+            <option value="2160">2160p</option>
+            <option value="1440">1440p</option>
+            <option value="1080">1080p</option>
+            <option value="720">720p</option>
+            <option value="480">480p</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="fps">Quadros/s</label>
+          <select id="fps">
+            <option value="0">Original</option>
+            <option value="23.976">23.976</option>
+            <option value="24">24</option>
+            <option value="25">25</option>
+            <option value="29.97">29.97</option>
+            <option value="30">30</option>
+            <option value="50">50</option>
+            <option value="60">60</option>
+          </select>
+        </div>
+        <div class="actions">
+          <button class="ghost" id="backBtn">← Refazer corte</button>
+          <button class="primary" id="renderBtn">Renderizar</button>
+        </div>
+        <ul class="renders" id="renders"></ul>
+      </div>
+    </section>
+  </main>
+
+  <footer class="keys" aria-label="Atalhos">
+    <span><kbd>␣</kbd> Reproduzir</span>
+    <span><kbd>I</kbd><kbd>O</kbd> Marcar</span>
+    <span><kbd>←</kbd><kbd>→</kbd> Quadro</span>
+    <span><kbd>⇧</kbd>+<kbd>←</kbd><kbd>→</kbd> 1 s</span>
+    <span class="keys-right" id="statusLine">// offline · processamento local</span>
+  </footer>
+
+  <div class="busy" id="busy" hidden>
+    <div class="busy-card" role="progressbar" aria-live="polite">
+      <div class="busy-head"><strong id="busyTitle"></strong><span id="busyPct">0%</span></div>
+      <div class="busy-track"><div class="busy-bar" id="busyBar"></div></div>
+      <div class="busy-foot"><span id="busyLabel"></span><span id="busyDetail"></span></div>
+      <button class="ghost busy-cancel" id="cancelBtn">Cancelar <kbd>Esc</kbd></button>
+    </div>
+  </div>
+  <div class="toast" id="toast" hidden></div>
+
+  <script src="timeline.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
